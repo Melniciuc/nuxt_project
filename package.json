@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit push",
     "build": "nuxt build",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
@@ -10,8 +12,14 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "drizzle-orm": "^0.43.1",
     "nuxt": "^3.17.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "drizzle-kit": "^0.31.1"
   }
 }
