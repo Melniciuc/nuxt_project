@@ -1,9 +1,12 @@
 export default defineEventHandler(async (event) => {
     const body = await readBody(event)
-    const newPosition = {
-        ...body,
-        createdAt: new Date(),
+    if (!Array.isArray(body)) {
+        throw createError({ statusCode: 400, statusMessage: 'Body must be an array' })
     }
-    const insertedPosition = useDrizzle().insert(tables.positionTelemetry).values(newPosition).returning().get()
-    return insertedPosition
+    body.forEach((item) => {
+        item.createdAt = new Date()
+    })
+
+    const insertedPositions = useDrizzle().insert(tables.positionTelemetry).values(body).returning().all()
+    return insertedPositions
 })
