@@ -6,7 +6,8 @@ export const positionTelemetry = sqliteTable('position_telemetry', {
   y: real('y').notNull(),
   z: real('z').notNull(),
   speedKmh: real('speed_kmh').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
+  recordedAt: real('recorded_at').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
 
 export const accelerationTelemetry = sqliteTable('acceleration_telemetry', {
@@ -14,5 +15,6 @@ export const accelerationTelemetry = sqliteTable('acceleration_telemetry', {
   accX: real('acc_x').notNull(),
   accY: real('acc_y').notNull(),
   accZ: real('acc_z').notNull(),
+  recordedAt: real('recorded_at').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull()
 })
