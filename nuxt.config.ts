@@ -12,5 +12,10 @@ export default defineNuxtConfig({
       pass: process.env.BASIC_AUTH_PASSWORD || '',
       message: 'Authentication required!',
     }
+  },
+  vite: {
+    server: {
+        allowedHosts: true,
+    }
   }
 })
