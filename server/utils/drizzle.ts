@@ -5,6 +5,7 @@ import Database from 'better-sqlite3';
 import * as schema from '~/database/schema'
 
 export const tables = schema
+console.log('Using SQLite DB at:', process.env.DATABASE_URL);
 const sqlite = new Database(process.env.DATABASE_URL);
 
 export function useDrizzle() {
