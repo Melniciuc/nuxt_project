@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
     return await useDrizzle()
         .select()
-        .from(tables.positionTelemetry)
+        .from(tables.telemetry)
         .all()
 })
