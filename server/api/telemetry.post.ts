@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
     if (!Array.isArray(body)) {
         throw createError({ statusCode: 400, statusMessage: 'Body must be an array' })
     }
-    const telemetryEntity = body.map((input) => {
+    const telemetryEntities = body.map((input) => {
         return {
             lat: input.lat,
             lng: input.lng,
@@ -16,6 +16,6 @@ export default defineEventHandler(async (event) => {
         }
     })
 
-    const insertedPositions = useDrizzle().insert(tables.telemetry).values(telemetryEntity).returning().all()
+    const insertedPositions = useDrizzle().insert(tables.telemetry).values(telemetryEntities).returning().all()
     return insertedPositions
 })
