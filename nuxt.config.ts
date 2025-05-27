@@ -2,7 +2,9 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
-  modules: ['nuxt-security'],
+  modules: ['nuxt-security', '@nuxt/ui'],
+  css: ['~/assets/css/main.css'],
+  ssr: false,
   security: {
     enabled: true,
     basicAuth: {
@@ -13,9 +15,12 @@ export default defineNuxtConfig({
       message: 'Authentication required!',
     }
   },
+  ui: {
+    colorMode: false
+  },
   vite: {
     server: {
-        allowedHosts: true,
+      allowedHosts: true,
     }
   }
 })
