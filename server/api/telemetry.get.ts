@@ -1,4 +1,4 @@
-import { asc, desc, count } from 'drizzle-orm';
+import { desc, and, ne } from 'drizzle-orm';
 
 export default defineEventHandler(async (event) => {
     const query = getQuery(event)
@@ -7,10 +7,25 @@ export default defineEventHandler(async (event) => {
     const data = await useDrizzle()
         .select()
         .from(tables.telemetry)
-        .orderBy(desc(tables.telemetry.createdAt))
+        .where(
+            or(
+                ne(tables.telemetry.lat, 0),
+                ne(tables.telemetry.lng, 0)
+            )
+        )
+        .orderBy(desc(tables.telemetry.id))
         .limit(limit)
         .offset(offset)
-    const total = await useDrizzle().select({count: sql<number>`count(*)`}).from(tables.telemetry)
+    const total = await useDrizzle()
+        .select({ count: sql<number>`count(*)` })
+        .from(tables.telemetry)
+        .where(
+            or(
+                ne(tables.telemetry.lat, 0),
+                ne(tables.telemetry.lng, 0)
+            )
+        )
+
     return {
         data,
         total: total[0].count,
