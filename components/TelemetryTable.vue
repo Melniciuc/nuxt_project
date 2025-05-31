@@ -143,9 +143,7 @@ const tableHeaders = computed(() => [
   { key: 'speedKmh', label: 'Speed (km/h)' },
   { key: 'accX', label: 'Acc X' },
   { key: 'accY', label: 'Acc Y' },
-  { key: 'accZ', label: 'Acc Z' }, // Added Acc Z to headers
   { key: 'recordedAt', label: 'Recorded At' },
-  { key: 'createdAt', label: 'Created At' }, // Added Created At to headers
 ]);
 
 const formatCellContent = (item: TelemetryItem, key: string): string => {
