@@ -1,30 +1,37 @@
 <template>
-  <div class="mx-auto px-8 py-8">
-    <h1 class="text-center text-3xl">Bus Telemetry</h1>
-    <div class="flex gap-4">
-      <div class="w-1/2">
-        <LMap ref="map" :zoom="zoom" :center="[47.02, 28.84]" :use-global-leaflet="false">
+  <div class="w-full mx-auto px-2 py-8 flex flex-col min-h-screen">
+    <h1 class="text-center text-3xl mb-4">Bus Telemetry</h1>
+    <div class="grid grid-cols-2 gap-4 flex-1">
+      <div class="m-5 flex flex-col">
+        <LMap ref="map" :zoom="zoom" :center="[47.02, 28.84]" :use-global-leaflet="false"
+          class="flex-1 rounded-lg shadow-md">
           <LTileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" layer-type="base" name="OpenStreetMap" />
           <LCircle v-for="point in tableData" :key="point.id" :lat-lng="[point.lat, point.lng]" :radius="5"
-            :color="point.color" :fill-color="point.color" :fill-opacity="0.2"/>
+            :color="point.color" :fill-color="point.color" :fill-opacity="0.2" />
         </LMap>
       </div>
-      <div class="w-1/2">
-        <UTable :data="tableData" v-model:pagination="pagination" class="flex-1">
-        </UTable>
-        <UPagination v-model:page="pagination.pageIndex" v-model:pageSize="pagination.pageSize" :total="total"
-          class="mt-4" :show-edges="true">
-        </UPagination>
-        <!-- <UInput v-model="pagination.pageIndex" type="number" /> -->
+      <div class="flex flex-col">
+        <div class="flex gap-4 w-auto m-10 mb-4 items-center">
+          <UCalendar v-model="selectedDate" size="xs" />
+          <div class="flex flex-col gap-4">
+            <TimePicker v-model="fromTime" label="From"/>
+            <TimePicker v-model="toTime" label="To"/>
+          </div>
+        </div>
+        <div class="m-6 mt-0 flex-1 overflow-y-scroll">
+          <TelemetryTable v-model="tableData" />
+        </div>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { UPagination } from '#components'
+import { getLocalTimeZone, today } from '@internationalized/date';
 
-const zoom = ref(12)
-
+const selectedDate = ref(today(getLocalTimeZone()))
+const fromTime = ref("01:00")
+const toTime = ref("23:00")
+const zoom = ref(13)
 const map = ref(null) as any;
 
 const pagination = ref({
@@ -69,20 +76,24 @@ const calculateAccelerationIndexY = (accY: number) => {
   else if (abs < 0.250) return 1
   else return 2
 }
-
-const total = computed(() => {
-  return telemetryResponse.value?.total || 0
-})
 const offset = computed(() => {
   return (pagination.value.pageIndex - 1) * pagination.value.pageSize
 })
 const limit = computed(() => {
   return pagination.value.pageSize
 })
+const fromParam = computed(() => {
+  return `${selectedDate.value.toString()}T${fromTime.value}:00Z`
+})
+const toParam = computed(() => {
+  return `${selectedDate.value.toString()}T${toTime.value}:00Z`
+})
 const { data: telemetryResponse } = await useApi('/api/telemetry', {
   query: {
     limit,
     offset,
+    from: fromParam,
+    to: toParam,
   },
 })
 </script>
