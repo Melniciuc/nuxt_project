@@ -14,12 +14,23 @@
         <div class="flex gap-4 w-auto m-10 mb-4 items-center">
           <UCalendar v-model="selectedDate" size="xs" />
           <div class="flex flex-col gap-4">
-            <TimePicker v-model="fromTime" label="From"/>
-            <TimePicker v-model="toTime" label="To"/>
+            <TimePicker v-model="fromTime" label="From" />
+            <TimePicker v-model="toTime" label="To" />
           </div>
           <div class="flex flex-col gap-4">
             <UCheckboxGroup v-model="selectedFilters" :items="filters" />
           </div>
+          <UModal v-model="isSettingsModalOpen" title="Config" :close="{
+            color: 'primary',
+            variant: 'outline',
+            class: 'rounded-full'
+          }">
+            <UButton icon="i-heroicons-cog-6-tooth" variant="ghost" @click="isSettingsModalOpen = true" />
+            <template #body>
+              <ConfigurationForm v-model:calibrationX="calibrationX" v-model:calibrationY="calibrationY"
+                v-model:colorRules="colorRules" />
+            </template>
+          </UModal>
         </div>
         <div class="m-6 mt-0 flex-1 overflow-y-scroll">
           <TelemetryTable v-model="tableData" />
@@ -32,32 +43,12 @@
 import { getLocalTimeZone, today } from '@internationalized/date';
 import type { CheckboxGroupItem, CheckboxGroupValue } from '@nuxt/ui'
 
-const filters = ref<CheckboxGroupItem[]>([
-  { label: 'Acceleration', value: 'accYplus' },
-  { label: 'Deceleration', value: 'accYminus' },
-  { label: 'Lateral', value: 'accX' },
-  { label: 'Speed', value: 'speed' }
-])
-const selectedFilters = ref<CheckboxGroupValue[]>(['accYplus', 'accYminus', 'accX', 'speed'])
-const selectedDate = ref(today(getLocalTimeZone()))
-const fromTime = ref("01:00")
-const toTime = ref("23:00")
-const zoom = ref(13)
-const map = ref(null) as any;
+const isSettingsModalOpen = ref(false);
 
-const pagination = ref({
-  pageIndex: 1,
-  pageSize: 10,
-})
-const tableData = computed(() => {
-  const data = telemetryResponse.value?.data || []
-  return data.map((item: any) => ({
-    ...item,
-    color: calculateColor(item),
-  }))
-})
+const calibrationX = ref(0.13)
+const calibrationY = ref(-0.025)
 
-const colorRules = {
+const colorRules = ref({
   accYplus: {
     'green': 0.125,
     'yellow': 0.250,
@@ -73,6 +64,37 @@ const colorRules = {
   speed: {
     'green': 50,
     'yellow': 60,
+  }
+})
+
+const filters = ref<CheckboxGroupItem[]>([
+  { label: 'Acceleration', value: 'accYplus' },
+  { label: 'Deceleration', value: 'accYminus' },
+  { label: 'Lateral', value: 'accX' },
+  { label: 'Speed', value: 'speed' }
+])
+const selectedFilters = ref<CheckboxGroupValue[]>(['accYplus', 'accYminus', 'accX', 'speed'])
+const selectedDate = ref(today(getLocalTimeZone()))
+const fromTime = ref("01:00")
+const toTime = ref("23:00")
+const zoom = ref(13)
+const map = ref(null) as any;
+
+const tableData = computed(() => {
+  const dataFromApi = telemetryResponse.value?.data
+  const dataArray = Array.isArray(dataFromApi) ? dataFromApi : [];
+  return dataArray.map((item: any) => convertTelemetryDataPoint(item));
+})
+
+const convertTelemetryDataPoint = (item: any) => {
+  const calibratedItem = {
+    ...item,
+    accX: item.accX + calibrationX.value,
+    accY: item.accY + calibrationY.value,
+  }
+  return {
+    ...calibratedItem,
+    color: calculateColor(calibratedItem),
   }
 }
 
@@ -98,35 +120,30 @@ const calculateColor = (item: any) => {
 
 const calculateAccelerationIndexYplus = (accY: number) => {
   if (accY === undefined || accY === null) return -1
-  if (accY < colorRules.accYplus.green) return 0
-  else if (accY < colorRules.accYplus.yellow) return 1
+  if (accY < colorRules.value.accYplus.green) return 0
+  else if (accY < colorRules.value.accYplus.yellow) return 1
   else return 2
 }
 const calculateAccelerationIndexYminus = (accY: number) => {
   if (accY === undefined || accY === null) return -1
-  if (accY > colorRules.accYminus.green) return 0
-  else if (accY > colorRules.accYminus.yellow) return 1
+  if (accY > colorRules.value.accYminus.green) return 0
+  else if (accY > colorRules.value.accYminus.yellow) return 1
   else return 2
 }
 const calculateAccelerationIndexX = (accX: number) => {
   if (accX === undefined || accX === null) return -1
-  if (accX < colorRules.accX.green) return 0
-  else if (accX < colorRules.accX.yellow) return 1
+  const absAccX = Math.abs(accX);
+  if (absAccX < colorRules.value.accX.green) return 0
+  else if (absAccX < colorRules.value.accX.yellow) return 1
   else return 2
 }
 const calculateSpeedIndex = (speed: number) => {
   if (speed === undefined || speed === null) return -1
-  if (speed < colorRules.speed.green) return 0
-  else if (speed < colorRules.speed.yellow) return 1
+  if (speed < colorRules.value.speed.green) return 0
+  else if (speed < colorRules.value.speed.yellow) return 1
   else return 2
 }
 
-const offset = computed(() => {
-  return (pagination.value.pageIndex - 1) * pagination.value.pageSize
-})
-const limit = computed(() => {
-  return pagination.value.pageSize
-})
 const fromParam = computed(() => {
   return `${selectedDate.value.toString()}T${fromTime.value}:00Z`
 })
@@ -135,8 +152,6 @@ const toParam = computed(() => {
 })
 const { data: telemetryResponse } = await useApi('/api/telemetry', {
   query: {
-    limit,
-    offset,
     from: fromParam,
     to: toParam,
   },
