@@ -35,6 +35,13 @@
     <div v-if="props.modelValue && props.modelValue.length > 0" class="flex items-center justify-between mt-4 text-sm">
       <div class="flex items-center space-x-2">
         <button
+          @click="goToFirstPage"
+          :disabled="currentPage === 1"
+          class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          First
+        </button>
+        <button
           @click="prevPage"
           :disabled="currentPage === 1"
           class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -42,7 +49,17 @@
           Previous
         </button>
         <span class="text-gray-700">
-          Page {{ currentPage }} of {{ totalPages }}
+          Page
+          <input
+            type="number"
+            v-model.number="pageInput"
+            @change="onPageInputChange"
+            min="1"
+            :max="totalPages"
+            class="w-14 px-1 py-0.5 border border-gray-300 rounded text-center mx-1"
+            :disabled="totalPages === 0"
+          />
+          of {{ totalPages }}
         </span>
         <button
           @click="nextPage"
@@ -50,6 +67,13 @@
           class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Next
+        </button>
+        <button
+          @click="goToLastPage"
+          :disabled="currentPage === totalPages || totalPages === 0"
+          class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Last
         </button>
       </div>
       <div class="flex items-center space-x-2">
@@ -93,6 +117,7 @@ const props = defineProps<Props>();
 const currentPage = ref(1);
 const itemsPerPageOptions = [1, 10, 50, 100, 1000];
 const itemsPerPage = ref(itemsPerPageOptions[1]);
+const pageInput = ref(1)
 
 watch(() => props.modelValue, () => {
   currentPage.value = 1;
@@ -102,6 +127,9 @@ watch(itemsPerPage, () => {
   currentPage.value = 1;
 });
 
+watch(currentPage, (val) => {
+  pageInput.value = val
+})
 
 const totalItems = computed(() => props.modelValue?.length || 0);
 
@@ -168,4 +196,18 @@ const formatCellContent = (item: TelemetryItem, key: string): string => {
       return String(value);
   }
 };
+
+function onPageInputChange() {
+  let val = Number(pageInput.value)
+  if (isNaN(val) || val < 1) val = 1
+  if (val > totalPages.value) val = totalPages.value
+  currentPage.value = val
+}
+
+function goToFirstPage() {
+  if (currentPage.value !== 1) currentPage.value = 1
+}
+function goToLastPage() {
+  if (currentPage.value !== totalPages.value && totalPages.value > 0) currentPage.value = totalPages.value
+}
 </script>
