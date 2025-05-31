@@ -2,6 +2,10 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
+  sourcemap: {
+    server: true,
+    client: true
+  },
   modules: ['nuxt-security', '@nuxt/ui', '@nuxtjs/leaflet'],
   css: ['~/assets/css/main.css'],
   ssr: false,

@@ -17,6 +17,9 @@
             <TimePicker v-model="fromTime" label="From"/>
             <TimePicker v-model="toTime" label="To"/>
           </div>
+          <div class="flex flex-col gap-4">
+            <UCheckboxGroup v-model="selectedFilters" :items="filters" />
+          </div>
         </div>
         <div class="m-6 mt-0 flex-1 overflow-y-scroll">
           <TelemetryTable v-model="tableData" />
@@ -27,7 +30,15 @@
 </template>
 <script setup lang="ts">
 import { getLocalTimeZone, today } from '@internationalized/date';
+import type { CheckboxGroupItem, CheckboxGroupValue } from '@nuxt/ui'
 
+const filters = ref<CheckboxGroupItem[]>([
+  { label: 'Acceleration', value: 'accYplus' },
+  { label: 'Deceleration', value: 'accYminus' },
+  { label: 'Lateral', value: 'accX' },
+  { label: 'Speed', value: 'speed' }
+])
+const selectedFilters = ref<CheckboxGroupValue[]>(['accYplus', 'accYminus', 'accX', 'speed'])
 const selectedDate = ref(today(getLocalTimeZone()))
 const fromTime = ref("01:00")
 const toTime = ref("23:00")
@@ -46,12 +57,34 @@ const tableData = computed(() => {
   }))
 })
 
+const colorRules = {
+  accYplus: {
+    'green': 0.125,
+    'yellow': 0.250,
+  },
+  accYminus: {
+    'green': -0.125,
+    'yellow': -0.250,
+  },
+  accX: {
+    'green': 0.125,
+    'yellow': 0.250,
+  },
+  speed: {
+    'green': 50,
+    'yellow': 60,
+  }
+}
+
 const calculateColor = (item: any) => {
-  const colorIndexX = calculateAccelerationIndexX(item.accX)
-  const colorIndexY = calculateAccelerationIndexY(item.accY)
-  if (colorIndexX === undefined || colorIndexY === undefined) return 'gray'
-  const colorIndex = Math.max(colorIndexX, colorIndexY)
+  const colorIndexX = selectedFilters.value.includes('accX') ? calculateAccelerationIndexX(item.accX) : -1
+  const colorIndexYplus = selectedFilters.value.includes('accYplus') ? calculateAccelerationIndexYplus(item.accY) : -1
+  const colorIndexYminus = selectedFilters.value.includes('accYminus') ? calculateAccelerationIndexYminus(item.accY) : -1
+  const colorIndexSpeed = selectedFilters.value.includes('speed') ? calculateSpeedIndex(item.speedKmh) : -1
+  const colorIndex = Math.max(colorIndexX, colorIndexYplus, colorIndexYminus, colorIndexSpeed)
   switch (colorIndex) {
+    case -1:
+      return 'gray'
     case 0:
       return 'green'
     case 1:
@@ -62,20 +95,32 @@ const calculateColor = (item: any) => {
       return 'gray'
   }
 }
+
+const calculateAccelerationIndexYplus = (accY: number) => {
+  if (accY === undefined || accY === null) return -1
+  if (accY < colorRules.accYplus.green) return 0
+  else if (accY < colorRules.accYplus.yellow) return 1
+  else return 2
+}
+const calculateAccelerationIndexYminus = (accY: number) => {
+  if (accY === undefined || accY === null) return -1
+  if (accY > colorRules.accYminus.green) return 0
+  else if (accY > colorRules.accYminus.yellow) return 1
+  else return 2
+}
 const calculateAccelerationIndexX = (accX: number) => {
-  if (accX === undefined || accX === null) return undefined
-  const abs = Math.abs(accX)
-  if (abs < 0.125) return 0
-  else if (abs < 0.250) return 1
+  if (accX === undefined || accX === null) return -1
+  if (accX < colorRules.accX.green) return 0
+  else if (accX < colorRules.accX.yellow) return 1
   else return 2
 }
-const calculateAccelerationIndexY = (accY: number) => {
-  if (accY === undefined || accY === null) return undefined
-  const abs = Math.abs(accY)
-  if (abs < 0.125) return 0
-  else if (abs < 0.250) return 1
+const calculateSpeedIndex = (speed: number) => {
+  if (speed === undefined || speed === null) return -1
+  if (speed < colorRules.speed.green) return 0
+  else if (speed < colorRules.speed.yellow) return 1
   else return 2
 }
+
 const offset = computed(() => {
   return (pagination.value.pageIndex - 1) * pagination.value.pageSize
 })
