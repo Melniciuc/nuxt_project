@@ -7,8 +7,16 @@
           class="flex-1 rounded-lg shadow-md">
           <LTileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" layer-type="base" name="OpenStreetMap" />
           <LCircle v-for="point in tableData" :key="point.id" :lat-lng="[point.lat, point.lng]" :radius="5"
-            :color="point.color" :fill-color="point.color" :fill-opacity="0.2" />
+            :color="point.color" :fill-color="point.color" :fill-opacity="0.2"
+            @click="openTelemetryPopover(point)" />
         </LMap>
+        <TelemetryPopover
+          v-if="popoverPointId !== null && selectedPopoverPoint"
+          :point="selectedPopoverPoint"
+          :open="popoverPointId !== null"
+          @update:open="val => { if (!val) closeTelemetryPopover() }"
+          @close="closeTelemetryPopover"
+        />
       </div>
       <div class="flex flex-col">
         <div class="flex gap-4 w-auto m-10 mb-4 items-center">
@@ -42,8 +50,20 @@
 <script setup lang="ts">
 import { getLocalTimeZone, today } from '@internationalized/date';
 import type { CheckboxGroupItem, CheckboxGroupValue } from '@nuxt/ui'
+import TelemetryPopover from '~/components/TelemetryPopover.vue'
 
 const isSettingsModalOpen = ref(false);
+const popoverPointId = ref<number|null>(null)
+function openTelemetryPopover(point: any) {
+  popoverPointId.value = point.id
+}
+function closeTelemetryPopover() {
+  popoverPointId.value = null
+}
+function handlePopoverOpen(val: boolean, id: number) {
+  if (val) popoverPointId.value = id
+  else popoverPointId.value = null
+}
 
 const calibrationX = ref(0.13)
 const calibrationY = ref(-0.025)
@@ -155,5 +175,9 @@ const { data: telemetryResponse } = await useApi('/api/telemetry', {
     from: fromParam,
     to: toParam,
   },
+})
+
+const selectedPopoverPoint = computed(() => {
+  return tableData.value.find(p => p.id === popoverPointId.value) || null
 })
 </script>

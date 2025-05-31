@@ -1,6 +1,5 @@
 <template>
   <div class="w-full mt-4 mb-4">
-    <!-- Table -->
     <div class="overflow-x-auto">
       <table v-if="paginatedData.length > 0" class="w-full text-sm border-collapse shadow-md rounded-md overflow-hidden">
         <thead class="bg-gray-50">
@@ -33,7 +32,6 @@
     <p v-if="!props.modelValue || props.modelValue.length === 0" class="text-center mt-6 text-gray-600 italic">
       No telemetry data to display.
     </p>
-    <!-- Pagination Controls -->
     <div v-if="props.modelValue && props.modelValue.length > 0" class="flex items-center justify-between mt-4 text-sm">
       <div class="flex items-center space-x-2">
         <button
@@ -81,7 +79,7 @@ interface TelemetryItem {
   accX: number;
   accY: number;
   accZ: number;
-  recordedAt: number; // Assuming this is a Unix timestamp (number)
+  recordedAt: number;
   createdAt: Date | string | number;
   [key: string]: any;
 }
@@ -92,17 +90,14 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// Pagination state
 const currentPage = ref(1);
-const itemsPerPageOptions = [1, 10, 50, 100, 1000]; // Added more options
-const itemsPerPage = ref(itemsPerPageOptions[1]); // Default to 10 items per page
+const itemsPerPageOptions = [1, 10, 50, 100, 1000];
+const itemsPerPage = ref(itemsPerPageOptions[1]);
 
-// Watch for changes in modelValue to reset pagination if data source changes significantly
 watch(() => props.modelValue, () => {
   currentPage.value = 1;
 });
 
-// Watch for changes in itemsPerPage to reset to the first page
 watch(itemsPerPage, () => {
   currentPage.value = 1;
 });
